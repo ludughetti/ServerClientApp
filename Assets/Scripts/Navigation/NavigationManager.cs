@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -12,6 +13,8 @@ namespace Navigation
         [SerializeField] private List<MenuDataSource> availableMenus;
     
         private int _currentMenuIndex;
+
+        public Action<string> OnMenuChange;
 
         private void Awake()
         {
@@ -53,6 +56,8 @@ namespace Navigation
                 _currentMenuIndex = i;
                 break;
             }
+            
+            OnMenuChange?.Invoke(id);
         }
     }
 }

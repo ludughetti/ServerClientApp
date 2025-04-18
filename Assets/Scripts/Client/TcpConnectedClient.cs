@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
+using Server;
 
 namespace Client
 {
@@ -18,8 +19,8 @@ namespace Client
         {
             _client = client;
             
-            //if(TcpNetworkManager.Instance.IsServer)
-            //    NetworkStream.BeginRead(_readBuffer, 0, _readBuffer.Length, OnRead, null);
+            if(TcpNetworkManager.Instance.IsServer)
+                NetworkStream.BeginRead(_readBuffer, 0, _readBuffer.Length, OnRead, null);
         }
 
         public void SendData(byte[] data)
@@ -34,7 +35,7 @@ namespace Client
                 while (_dataReceived.Count > 0)
                 {
                     var data = _dataReceived.Dequeue();
-                    //TcpNetworkManager.Instance.ReceiveData(data);
+                    TcpNetworkManager.Instance.ReceiveData(data);
                 }
             }
         }
@@ -54,7 +55,7 @@ namespace Client
         {
             if (NetworkStream?.EndRead(asyncResult) == 0)
             {
-                //TcpNetworkManager.Instance.DisconnectClient(this);
+                TcpNetworkManager.Instance.DisconnectClient(this);
                 return;
             }
             

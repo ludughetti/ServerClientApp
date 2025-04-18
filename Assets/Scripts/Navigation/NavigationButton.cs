@@ -49,10 +49,5 @@ namespace Navigation
         {
             OnClick?.Invoke(_id);
         }
-
-        public void PrintText()
-        {
-            Debug.Log($"Button {name} clicked: {_id}");
-        }
     }
 }

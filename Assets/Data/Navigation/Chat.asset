@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a3fa25d9705bca499d10524a7adbb3d, type: 3}
   m_Name: Chat
   m_EditorClassIdentifier: 
-  menuId: Chat
+  menuId: Connect
