@@ -1,8 +1,6 @@
 using System;
 using System.Text;
-using Server;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using static Utils.Validator;
@@ -27,18 +25,6 @@ namespace UI
             userInput.text = defaultInputMessage;
         }
 
-        private void Start()
-        {
-            TcpNetworkManager.Instance.OnDataSent += OnReceiveData;
-            TcpNetworkManager.Instance.OnDataReceived += OnReceiveData;
-        }
-
-        private void OnDestroy()
-        {
-            TcpNetworkManager.Instance.OnDataSent -= OnReceiveData;
-            TcpNetworkManager.Instance.OnDataReceived -= OnReceiveData;
-        }
-
         public void OnSendButtonClick()
         {
             Debug.Log("OnSendButtonClick");
@@ -50,9 +36,9 @@ namespace UI
             userInput.text = string.Empty;
         }
         
-        private void OnReceiveData(byte[] data)
+        public void OnDataReceived(byte[] data)
         {
-            Debug.Log("OnReceiveData");
+            Debug.Log("OnMessageReceived invoked");
             UpdateChatHistory(Encoding.UTF8.GetString(data));
             UpdateScroll();
         }

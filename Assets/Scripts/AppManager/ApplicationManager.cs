@@ -1,6 +1,7 @@
 using System;
 using System.Net;
-using System.Text;
+using System.Net.Sockets;
+using Client;
 using Navigation;
 using Server;
 using UI;
@@ -16,13 +17,11 @@ namespace AppManager
         [SerializeField] private UIServerClientHandler uiServerClientHandler;
         [SerializeField] private UIChatHandler uiChatHandler;
         [SerializeField] private MenuDataSource chatroomMenu;
-        
-        // TODO: Replace with custom classes
-        [SerializeField] private TcpNetworkManager tcpNetworkManager;
-        
+
         private bool _isClientApp;
         private IPAddress _serverIP;
         private int _serverPort;
+        private TcpClientManager _client;
         
         private void Awake()
         {
@@ -40,6 +39,12 @@ namespace AppManager
             navigationManager.OnMenuChange -= CheckMenuChange;
             uiChatHandler.OnUserMessageSent -= SendUserMessage;
         }
+        
+        private void Update()
+        {
+            if(_isClientApp && _client != null)
+                _client.FlushQueuedMessages();
+        }
 
         private void CheckMenuChange(string newMenuId)
         {
@@ -49,52 +54,52 @@ namespace AppManager
                 Disconnect();
         }
 
-        // TODO: Replace with calls to each server/client dedicated class
         private void Connect()
         {
             Debug.Log($"Connecting...\n" +
                       $"Is Client? {uiServerClientHandler.IsClientApp()}, " +
                       $"IPAddress: {uiServerClientHandler.GetServerIP()}, " +
                       $"PortNumber: {uiServerClientHandler.GetPort()}");
-            
+
             _isClientApp = uiServerClientHandler.IsClientApp();
-            string port = uiServerClientHandler.GetPort();
+            var port = uiServerClientHandler.GetPort();
             _serverPort = Convert.ToInt32(port);
 
-            if (uiServerClientHandler.IsClientApp())
+            if (_isClientApp)
             {
                 _serverIP = IPAddress.Parse(uiServerClientHandler.GetServerIP());
-                TcpNetworkManager.Instance.StartClient(_serverIP, _serverPort);
+                _client = new TcpClientManager(new TcpClient());
+                
+                //Subscribe to client receive event so that UI is updated
+                _client.OnMessageReceived += uiChatHandler.OnDataReceived;
+                _client.StartClient(_serverIP, _serverPort);
             }
             else
             {
-                TcpNetworkManager.Instance.StartServer(_serverPort);
+                TcpServerManager.Instance.StartServer(_serverPort);
             }
         }
 
-        // TODO: Replace with calls to each server/client dedicated class
         private void SendUserMessage(string message)
         {
-            Debug.Log("Message Sent");
-            byte[] data = Encoding.UTF8.GetBytes(message);
-
-            if (tcpNetworkManager.IsServer)
-            {
-                TcpNetworkManager.Instance.BroadcastData(data);
-            }
-            else
-            {
-                TcpNetworkManager.Instance.SendDataToServer(data);
-            }
+            _client.SendDataToServer(message);
         }
 
-        // TODO: Replace with calls to each server/client dedicated class
         private void Disconnect()
         {
             Debug.Log($"Disconnecting...\n" +
                       $"Is Client? {uiServerClientHandler.IsClientApp()}, " +
                       $"IPAddress: {uiServerClientHandler.GetServerIP()}, " +
                       $"PortNumber: {uiServerClientHandler.GetPort()}");
+
+            if (_isClientApp)
+            {
+                // Unsubscribe upon client disconnect 
+                _client.OnMessageReceived -= uiChatHandler.OnDataReceived;
+                _client.CloseClient();
+            }
+            else
+                TcpServerManager.Instance.StopServer();
         }
 
         private void ValidateDependencies()

@@ -4960,7 +4960,6 @@ GameObject:
   - component: {fileID: 2007892559}
   - component: {fileID: 2007892561}
   - component: {fileID: 2007892560}
-  - component: {fileID: 2007892562}
   m_Layer: 0
   m_Name: AppManager
   m_TagString: Untagged
@@ -5012,20 +5011,6 @@ MonoBehaviour:
   uiServerClientHandler: {fileID: 1970201647}
   uiChatHandler: {fileID: 1970201648}
   chatroomMenu: {fileID: 11400000, guid: 399b45794b0309e439d802cfbdded9b3, type: 2}
-  tcpNetworkManager: {fileID: 2007892562}
---- !u!114 &2007892562
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2007892558}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 972a99a0f6a374b49b4c50ea27cc6b50, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isPersistent: 1
 --- !u!1 &2051332477
 GameObject:
   m_ObjectHideFlags: 0
