@@ -9,7 +9,7 @@ namespace UI
     {
         [SerializeField] private Toggle isClientToggle;
         [SerializeField] private TMP_InputField serverIPInputField;
-        [SerializeField] private TMP_Text portText;
+        [SerializeField] private TMP_InputField portText;
 
         private bool _isClientApp;
 
