@@ -39,6 +39,7 @@ namespace Client
         
         public void SendDataToServer(string message)
         {
+            Debug.Log($"Sending data to server: {message}");
             var data = Encoding.UTF8.GetBytes(message);
             NetworkStream.Write(data, 0, data.Length);
         }
@@ -52,38 +53,43 @@ namespace Client
         
         private void OnRead(IAsyncResult asyncResult)
         {
-            Debug.Log("Message received");
+            Debug.Log("Message received in client");
             var bytesRead = NetworkStream.EndRead(asyncResult);
 
             if (bytesRead <= 0)
             {
+                Debug.Log($"Message received but no bytes read");
                 TcpServerManager.Instance.DisconnectClient(this);
                 return;
             }
 
             lock (ReadHandler)
             {
-                var dataToBroadcast = ReadBuffer.TakeWhile(b => (char) b != '\0').ToArray();
-                Debug.Log($"Message enqueued: {Encoding.UTF8.GetString(dataToBroadcast)}");
+                Debug.Log("Processing message received in client");
+                byte[] dataToBroadcast = new byte[bytesRead];
+                Array.Copy(ReadBuffer, dataToBroadcast, bytesRead);
+                Debug.Log($"Message enqueued in client: {Encoding.UTF8.GetString(dataToBroadcast)}");
                 _dataReceived.Enqueue(dataToBroadcast);
             }
             
             Array.Clear(ReadBuffer, 0, ReadBuffer.Length);
             NetworkStream.BeginRead(ReadBuffer, 0, ReadBuffer.Length, OnRead, null);
-            Debug.Log("Message queued, buffer cleared and listening again");
+            Debug.Log("Message queued, buffer cleared and listening again in client");
         }
 
         public void FlushQueuedMessages()
         {
-            Debug.Log("FlushQueuedMessages triggered");
-            lock (ReadHandler)
+            while (_dataReceived.Count > 0)
             {
-                Debug.Log("Processing queued messages");
-                while (_dataReceived.Count > 0)
+                Debug.Log("_dataReceived contains messages");
+                var data = _dataReceived.Dequeue();
+                try
                 {
-                    Debug.Log("_dataReceived contains messages");
-                    var data = _dataReceived.Dequeue();
                     OnMessageReceived.Invoke(data);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
                 }
             }
         }

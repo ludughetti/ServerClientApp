@@ -95,28 +95,33 @@ namespace Server
 
         private void OnRead(IAsyncResult result)
         {
-            Debug.Log("Message received");
+            Debug.Log("Message received on server");
             TcpClientManager clientManager = (TcpClientManager) result.AsyncState;
             
             var bytesRead = clientManager.NetworkStream.EndRead(result);
 
             if (bytesRead <= 0)
             {
+                Debug.Log("Message received but no bytes read on server");
                 DisconnectClient(clientManager);
                 return;
             }
 
             byte[] dataToBroadcast;
 
-            lock(clientManager.ReadHandler)
-                dataToBroadcast = clientManager.ReadBuffer.TakeWhile(b => (char) b != '\0').ToArray();
+            lock (clientManager.ReadHandler)
+            {
+                Debug.Log("Processing message received in server");
+                dataToBroadcast = new byte[bytesRead];
+                Array.Copy(clientManager.ReadBuffer, dataToBroadcast, bytesRead);
+            }
             
             Debug.Log($"Broadcasting data to clients. Message: {Encoding.UTF8.GetString(dataToBroadcast)}");
             ReceiveAndBroadcastData(dataToBroadcast);
             
             Array.Clear(clientManager.ReadBuffer, 0, clientManager.ReadBuffer.Length);
             clientManager.NetworkStream.BeginRead(clientManager.ReadBuffer, 0, 
-                clientManager.ReadBuffer.Length, OnRead, null);
+                clientManager.ReadBuffer.Length, OnRead, clientManager);
         }
     }
 }
