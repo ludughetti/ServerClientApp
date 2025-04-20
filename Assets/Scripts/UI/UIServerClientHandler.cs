@@ -8,10 +8,12 @@ namespace UI
     public class UIServerClientHandler : MonoBehaviour
     {
         [SerializeField] private Toggle isClientToggle;
+        [SerializeField] private Toggle isServerOnlyToggle;
         [SerializeField] private TMP_InputField serverIPInputField;
         [SerializeField] private TMP_InputField portText;
 
         private bool _isClientApp;
+        private bool _isServerOnlyApp;
 
         private void Awake()
         {
@@ -20,9 +22,14 @@ namespace UI
             serverIPInputField.interactable = _isClientApp;
         }
 
-        public bool IsClientApp()
+        public bool IsClientOnlyApp()
         {
             return _isClientApp;
+        }
+        
+        public bool IsServerOnlyApp()
+        {
+            return _isServerOnlyApp;
         }
 
         public string GetServerIP()
@@ -39,8 +46,17 @@ namespace UI
         {
             _isClientApp = isClient;
             serverIPInputField.interactable = isClient;
+            isServerOnlyToggle.interactable = !isClient;
             
             Debug.Log($"Toggle triggered. Final values: isClient = {_isClientApp}, is ServerIP interactable = {serverIPInputField.interactable}");
+        }
+        
+        public void OnServerOnlyValueChanged(bool isServerOnlyApp)
+        {
+            _isServerOnlyApp = isServerOnlyApp;
+            isClientToggle.interactable = !isServerOnlyApp;
+            
+            Debug.Log($"Button clicked. Final values: isServerClientApp = {_isServerOnlyApp}, is ServerIP interactable = {serverIPInputField.interactable}");
         }
         
         private void ValidateDependencies()

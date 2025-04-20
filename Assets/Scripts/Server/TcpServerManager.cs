@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using Client;
-using Common;
+using Unity.VisualScripting;
+using Utils;
 using UnityEngine;
+using static Utils.Encoder;
 
 namespace Server
 {
@@ -14,19 +14,27 @@ namespace Server
     {
         private List<TcpClientManager> _connectedClients = new ();
         private TcpListener _listener;
-
-        public void StartServer(int portNumber)
+        private Queue<string> _uiPendingMessages = new ();
+        private Queue<string> _chatHistory = new ();
+        private bool _queueUIPendingMessages;
+        
+        public Action<byte[]> OnServerMessageReceived;
+        
+        public void StartServer(int portNumber, bool queueUIPendingMessages)
         {
-            Debug.Log("Start Server");
+            Debug.Log($"Starting Server on port { portNumber }");
             _listener = new TcpListener(IPAddress.Any, portNumber);
 
             _listener.Start();
             _listener.BeginAcceptTcpClient(OnClientConnected, null);
+            
+            // Define whether to queue incoming messages to display in the UI (only applicable in server-only mode)
+            _queueUIPendingMessages = queueUIPendingMessages;
         }
 
         public void StopServer()
         {
-            Debug.Log("Stop Server");
+            Debug.Log("Stopping Server");
             _listener?.Stop();
 
             lock (_connectedClients)
@@ -40,11 +48,20 @@ namespace Server
 
         private void ReceiveAndBroadcastData(byte[] data)
         {
+            var dataMessage = Decode(data);
+            
+            // Queue messages in history
+            _chatHistory.Enqueue(dataMessage);
+            
+            // 
+            if (_queueUIPendingMessages)
+                _uiPendingMessages.Enqueue(dataMessage);
+            
             foreach (var tcpClient in _connectedClients)
             {
                 try
                 {
-                    Debug.Log($"Broadcasting data to client. Is NetworkStream available? {tcpClient.NetworkStream != null}");
+                    Debug.Log($"Broadcasting data to client: { dataMessage }");
                     tcpClient.NetworkStream.Write(data, 0, data.Length);
                 }
                 catch (Exception e)
@@ -79,10 +96,12 @@ namespace Server
             Debug.Log("Listening to messages for new client");
             var clientManager = new TcpClientManager(client);
 
+            // Add new client to the list of connected clients
             _connectedClients.Add(clientManager);
+            
             try
             {
-                Debug.Log($"Client connected. Is NetworkStream available? {clientManager.NetworkStream != null}");
+                Debug.Log("New client connected to server");
                 clientManager.NetworkStream.BeginRead(clientManager.ReadBuffer, 0, 
                     clientManager.ReadBuffer.Length, OnRead, clientManager);
             }
@@ -90,19 +109,18 @@ namespace Server
             {
                 Debug.LogException(e);
             }
-            
         }
 
         private void OnRead(IAsyncResult result)
         {
-            Debug.Log("Message received on server");
-            TcpClientManager clientManager = (TcpClientManager) result.AsyncState;
+            Debug.Log("Server received new message");
+            var clientManager = (TcpClientManager) result.AsyncState;
             
             var bytesRead = clientManager.NetworkStream.EndRead(result);
 
             if (bytesRead <= 0)
             {
-                Debug.Log("Message received but no bytes read on server");
+                Debug.Log("Message received but server read no bytes");
                 DisconnectClient(clientManager);
                 return;
             }
@@ -116,12 +134,23 @@ namespace Server
                 Array.Copy(clientManager.ReadBuffer, dataToBroadcast, bytesRead);
             }
             
-            Debug.Log($"Broadcasting data to clients. Message: {Encoding.UTF8.GetString(dataToBroadcast)}");
+            Debug.Log($"Broadcasting data to clients. Message: {Decode(dataToBroadcast)}");
             ReceiveAndBroadcastData(dataToBroadcast);
             
             Array.Clear(clientManager.ReadBuffer, 0, clientManager.ReadBuffer.Length);
             clientManager.NetworkStream.BeginRead(clientManager.ReadBuffer, 0, 
                 clientManager.ReadBuffer.Length, OnRead, clientManager);
+        }
+
+        public void FlushEnqueuedMessages()
+        {
+            while (_uiPendingMessages.Count > 0)
+            {
+                Debug.Log("Processing server UI pending messages");
+                var message = _uiPendingMessages.Dequeue();
+                
+                OnServerMessageReceived?.Invoke(Encode(message));
+            }
         }
     }
 }

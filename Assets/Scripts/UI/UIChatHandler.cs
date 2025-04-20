@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static Utils.Validator;
+using static Utils.Encoder;
 
 namespace UI
 {
@@ -39,7 +40,7 @@ namespace UI
         public void OnDataReceived(byte[] data)
         {
             Debug.Log("OnMessageReceived invoked");
-            UpdateChatHistory(Encoding.UTF8.GetString(data));
+            UpdateChatHistory(Decode(data));
             UpdateScroll();
         }
         

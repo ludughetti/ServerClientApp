@@ -18,7 +18,8 @@ namespace AppManager
         [SerializeField] private UIChatHandler uiChatHandler;
         [SerializeField] private MenuDataSource chatroomMenu;
 
-        private bool _isClientApp;
+        private bool _isClientOnlyApp;
+        private bool _isServerOnlyApp;
         private IPAddress _serverIP;
         private int _serverPort;
         private TcpClientManager _client;
@@ -42,8 +43,10 @@ namespace AppManager
         
         private void Update()
         {
-            if(_isClientApp && _client != null)
+            if(_client != null && (_isClientOnlyApp || !_isServerOnlyApp))
                 _client.FlushQueuedMessages();
+            else if (_isServerOnlyApp)
+                TcpServerManager.Instance.FlushEnqueuedMessages();
         }
 
         private void CheckMenuChange(string newMenuId)
@@ -57,27 +60,37 @@ namespace AppManager
         private void Connect()
         {
             Debug.Log($"Connecting...\n" +
-                      $"Is Client? {uiServerClientHandler.IsClientApp()}, " +
+                      $"Is Client? {uiServerClientHandler.IsClientOnlyApp()}, " +
                       $"IPAddress: {uiServerClientHandler.GetServerIP()}, " +
                       $"PortNumber: {uiServerClientHandler.GetPort()}");
 
-            _isClientApp = uiServerClientHandler.IsClientApp();
+            _isClientOnlyApp = uiServerClientHandler.IsClientOnlyApp();
+            _isServerOnlyApp = uiServerClientHandler.IsServerOnlyApp();
             var port = uiServerClientHandler.GetPort();
             _serverPort = Convert.ToInt32(port);
 
-            if (_isClientApp)
+            // Is server only or is server-client
+            if (_isServerOnlyApp || !_isClientOnlyApp)
             {
-                _serverIP = IPAddress.Parse(uiServerClientHandler.GetServerIP());
-                _client = new TcpClientManager(new TcpClient());
+                TcpServerManager.Instance.StartServer(_serverPort, _isServerOnlyApp);
                 
-                //Subscribe to client receive event so that UI is updated
-                _client.OnMessageReceived += uiChatHandler.OnDataReceived;
-                _client.StartClient(_serverIP, _serverPort);
+                // If it's server only, early exit
+                if (_isServerOnlyApp)
+                {
+                    // Since this app will only be running the server, we subscribe the event so that UI gets updated too
+                    TcpServerManager.Instance.OnServerMessageReceived += uiChatHandler.OnDataReceived;
+                    return;
+                }
             }
-            else
-            {
-                TcpServerManager.Instance.StartServer(_serverPort);
-            }
+            
+            // If it's a client only we use the address entered in the UI, otherwise we loopback
+            _serverIP = _isClientOnlyApp ? IPAddress.Parse(uiServerClientHandler.GetServerIP()) : IPAddress.Loopback;
+            
+            _client = new TcpClientManager(new TcpClient());
+            
+            //Subscribe to client receive event so that UI is updated
+            _client.OnClientMessageReceived += uiChatHandler.OnDataReceived;
+            _client.StartClient(_serverIP, _serverPort);
         }
 
         private void SendUserMessage(string message)
@@ -88,18 +101,26 @@ namespace AppManager
         private void Disconnect()
         {
             Debug.Log($"Disconnecting...\n" +
-                      $"Is Client? {uiServerClientHandler.IsClientApp()}, " +
+                      $"Is Client? {uiServerClientHandler.IsClientOnlyApp()}, " +
                       $"IPAddress: {uiServerClientHandler.GetServerIP()}, " +
                       $"PortNumber: {uiServerClientHandler.GetPort()}");
 
-            if (_isClientApp)
+            if (_isClientOnlyApp || !_isServerOnlyApp)
             {
                 // Unsubscribe upon client disconnect 
-                _client.OnMessageReceived -= uiChatHandler.OnDataReceived;
+                _client.OnClientMessageReceived -= uiChatHandler.OnDataReceived;
                 _client.CloseClient();
+                
+                // If it's client only we don't need to close the server
+                if (_isClientOnlyApp) 
+                    return;
             }
-            else
-                TcpServerManager.Instance.StopServer();
+            
+            TcpServerManager.Instance.StopServer();
+
+            // If we were only running the server, we unsubscribe from the UI update event 
+            if (_isServerOnlyApp)
+                TcpServerManager.Instance.OnServerMessageReceived -= uiChatHandler.OnDataReceived;
         }
 
         private void ValidateDependencies()
