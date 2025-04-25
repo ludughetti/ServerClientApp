@@ -4,16 +4,16 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static Utils.Validator;
-using static Utils.Encoder;
 
 namespace UI
 {
     public class UIChatHandler : MonoBehaviour
     {
-        [SerializeField] private TMP_Text chatHistory;
         [SerializeField] private ScrollRect chatHistoryScrollRect;
         [SerializeField] private TMP_InputField userInput;
         [SerializeField] private TMP_Text usersList;
+        [SerializeField] private Transform chatContent;
+        [SerializeField] private GameObject chatMessagePrefab;
         [SerializeField] private string defaultInputMessage = "Send a message...";
 
         public Action<string> OnUserMessageSent;
@@ -22,13 +22,12 @@ namespace UI
         {
             ValidateDependencies();
             
-            chatHistory.text = string.Empty;
             userInput.text = defaultInputMessage;
         }
 
         public void OnSendButtonClick()
         {
-            Debug.Log("OnSendButtonClick");
+            Debug.Log("Send message button clicked");
             if (string.IsNullOrEmpty(userInput.text))
                 return;
             
@@ -39,27 +38,38 @@ namespace UI
         
         public void OnDataReceived(ChatMessage chatMessage)
         {
-            Debug.Log("OnMessageReceived invoked");
-            UpdateChatHistory(chatMessage.ToString());
+            Debug.Log("UI processing new message");
+            UpdateChatHistory(chatMessage);
             UpdateScroll();
         }
-        
-        private void UpdateChatHistory(string message)
+
+        public void ResetChatHistory()
         {
-            Debug.Log($"UpdateChatHistory:  {message}");
-            chatHistory.text += message + Environment.NewLine;
+            //chatContent.removeAllChildren();
+        }
+        
+        private void UpdateChatHistory(ChatMessage chatMessage)
+        {
+            Debug.Log($"Updating Chat history with new message: {chatMessage}");
+            //chatHistory.text += message + Environment.NewLine;
+            
+            // Instantiate new message bubble and populate
+            var newMessage = Instantiate(chatMessagePrefab, chatContent);
+            
+            var texts = newMessage.GetComponentsInChildren<TextMeshProUGUI>();
+            texts[0].text = chatMessage.GetUsername(); // or skip if you don’t want names
+            texts[1].text = chatMessage.GetMessage();
         }
 
         private void UpdateScroll()
         {
-            Debug.Log("UpdateScroll");
+            Debug.Log("Updating Chat history scroll");
             chatHistoryScrollRect.verticalNormalizedPosition = 0f;
         }
         
         private void ValidateDependencies()
         {
-            enabled = IsDependencyConfigured(name, "Chat History", chatHistory) && 
-                      IsDependencyConfigured(name, "User Input", userInput) &&
+            enabled = IsDependencyConfigured(name, "User Input", userInput) &&
                       IsDependencyConfigured(name, "User List", usersList);
         }    
     }
