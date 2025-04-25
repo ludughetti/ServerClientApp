@@ -8,6 +8,7 @@ namespace Client
     public abstract class ClientManager
     {
         protected Queue<byte[]> _dataReceived = new();
+        protected string _onConnectMessage = "User connected to chat";
         public Action<byte[]> OnDataReceived;
 
         public abstract void StartClient(IPAddress ipAddress, int port);

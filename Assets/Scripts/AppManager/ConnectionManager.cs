@@ -27,7 +27,7 @@ namespace AppManager
                       $"Is Client only? { isClientOnlyApp }, " +
                       $"Is Server only? { isServerOnlyApp }, " +
                       $"IPAddress: { ipAddress }, " +
-                      $"PortNumber: { port }" +
+                      $"PortNumber: { port }, " +
                       $"NetworkType: { networkType }");
             
             _isServerOnlyApp = isServerOnlyApp;

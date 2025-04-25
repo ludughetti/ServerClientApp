@@ -4,18 +4,20 @@ using System.Net;
 using System.Net.Sockets;
 using Client;
 using UnityEngine;
+using Utils;
 using static Utils.Encoder;
 
 namespace Server
 {
     public class TcpServerManager : ServerManager
     {
+        public static TcpServerManager Instance => MonoBehaviourSingleton<TcpServerManager>.Instance;
         private List<TcpClientManager> _connectedClients = new ();
         private TcpListener _listener;
         
         public override void StartServer(int portNumber, bool queueUIPendingMessages)
         {
-            Debug.Log($"Starting Server on port { portNumber }");
+            Debug.Log($"Starting TCP Server on port { portNumber }");
             _listener = new TcpListener(IPAddress.Any, portNumber);
 
             _listener.Start();

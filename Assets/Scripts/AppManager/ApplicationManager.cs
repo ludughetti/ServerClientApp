@@ -35,6 +35,14 @@ namespace AppManager
             uiChatHandler.OnUserMessageSent -= connectionManager.HandleClientMessageSent;
         }
 
+        public void ExitApp()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#endif
+            Application.Quit();
+        }
+
         private void CheckMenuChange(string newMenuId)
         {
             if (chatroomMenu.GetMenuId() == newMenuId)
@@ -48,10 +56,12 @@ namespace AppManager
             _isClientOnlyApp = uiServerClientHandler.IsClientOnlyApp();
             _isServerOnlyApp = uiServerClientHandler.IsServerOnlyApp();
             var port = uiServerClientHandler.GetPort();
+            
+            Debug.Log($"Network type is {uiServerClientHandler.GetNetworkType()}");
 
-            // ConnectionManager will decide how to start up the server/client and whether to use TCP/UDP
-            connectionManager.StartConnection(_isServerOnlyApp, _isClientOnlyApp, 
-                uiServerClientHandler.GetServerIP(), Convert.ToInt32(port), "TCP");
+            // ConnectionManager will decide how to set up and start up the server/client
+            connectionManager.StartConnection(_isServerOnlyApp, _isClientOnlyApp, uiServerClientHandler.GetServerIP(), 
+                Convert.ToInt32(port), uiServerClientHandler.GetNetworkType());
             
             // If it's server only we subscribe the event so that UI gets updated too and early exit
             if (_isServerOnlyApp)
@@ -66,11 +76,7 @@ namespace AppManager
 
         private void Disconnect()
         {
-            Debug.Log($"Disconnecting...\n" +
-                      $"Is Client? {uiServerClientHandler.IsClientOnlyApp()}, " +
-                      $"IPAddress: {uiServerClientHandler.GetServerIP()}, " +
-                      $"PortNumber: {uiServerClientHandler.GetPort()}");
-
+            // ConnectionManager decides what to close/disconnect
             connectionManager.EndConnection();
             
             // Unsubscribe upon client disconnect 

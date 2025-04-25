@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utils;
 using static Utils.Encoder;
 
 namespace Server
 {
-    public abstract class ServerManager : MonoBehaviourSingleton<TcpServerManager>
+    public abstract class ServerManager : MonoBehaviour
     {
         protected Queue<string> _uiPendingMessages = new ();
         protected Queue<string> _chatHistory = new ();

@@ -26,8 +26,10 @@ namespace Client
         public override void StartClient(IPAddress serverIPAddress, int port)
         {
             Debug.Log($"Starting UDP client... connecting to {serverIPAddress}:{port}");
-            _client = new UdpClient(port);
+            _client = new UdpClient();
             _serverEndpoint = new IPEndPoint(serverIPAddress, port);
+            _client.BeginReceive(OnRead, null);
+            SendOnConnect();
         }
 
         public override void CloseClient()
@@ -53,6 +55,11 @@ namespace Client
             
             Debug.Log("Message processed and UDP client listening again");
             _client.BeginReceive(OnRead, _client);
+        }
+
+        private void SendOnConnect()
+        {
+            SendDataToServer(_onConnectMessage);
         }
     }
 }

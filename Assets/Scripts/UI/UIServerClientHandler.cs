@@ -11,6 +11,7 @@ namespace UI
         [SerializeField] private Toggle isServerOnlyToggle;
         [SerializeField] private TMP_InputField serverIPInputField;
         [SerializeField] private TMP_InputField portText;
+        [SerializeField] private TMP_Dropdown networkDropdown;
 
         private bool _isClientApp;
         private bool _isServerOnlyApp;
@@ -40,6 +41,11 @@ namespace UI
         public string GetPort()
         {
             return portText.text;
+        }
+
+        public string GetNetworkType()
+        {
+            return networkDropdown.options[networkDropdown.value].text;
         }
 
         public void OnClientToggleValueChanged(bool isClient)
