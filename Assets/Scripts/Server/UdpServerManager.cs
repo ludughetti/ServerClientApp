@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using Client;
@@ -33,12 +32,7 @@ namespace Server
             Debug.Log("Stopping Server");
 
             lock (_connectedClients)
-            {
-                foreach (var udpClient in _connectedClients)
-                    udpClient.CloseClient();
-
                 _connectedClients.Clear();
-            }
             
             _udpServer?.Close();
         }
