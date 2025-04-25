@@ -14,9 +14,14 @@ namespace UI
         [SerializeField] private TMP_Text usersList;
         [SerializeField] private Transform chatContent;
         [SerializeField] private GameObject chatMessagePrefab;
+        [SerializeField] private GameObject replyingToObject;
+        [SerializeField] private TMP_Text replyingToUserName;
+        [SerializeField] private TMP_Text replyingToMessageText;
         [SerializeField] private string defaultInputMessage = "Send a message...";
+        
+        private int _messageReplyToId;
 
-        public Action<string> OnUserMessageSent;
+        public Action<int, string> OnUserMessageSent;
     
         private void Awake()
         {
@@ -31,15 +36,16 @@ namespace UI
             if (string.IsNullOrEmpty(userInput.text))
                 return;
             
-            OnUserMessageSent?.Invoke(userInput.text);
+            OnUserMessageSent?.Invoke(_messageReplyToId, userInput.text);
             
             userInput.text = string.Empty;
+            UpdateReplyToId();
         }
         
-        public void OnDataReceived(ChatMessage chatMessage)
+        public void OnDataReceived(ChatMessage chatMessage, ChatMessage linkedMessage)
         {
             Debug.Log("UI processing new message");
-            UpdateChatHistory(chatMessage);
+            UpdateChatHistory(chatMessage, linkedMessage);
             UpdateScroll();
         }
 
@@ -48,23 +54,47 @@ namespace UI
             //chatContent.removeAllChildren();
         }
         
-        private void UpdateChatHistory(ChatMessage chatMessage)
+        public void OnCancelReplyToButtonClick()
+        {
+            UpdateReplyToId();
+        }
+        
+        private void UpdateChatHistory(ChatMessage chatMessage, ChatMessage linkedMessage)
         {
             Debug.Log($"Updating Chat history with new message: {chatMessage}");
             //chatHistory.text += message + Environment.NewLine;
             
             // Instantiate new message bubble and populate
             var newMessage = Instantiate(chatMessagePrefab, chatContent);
-            
-            var texts = newMessage.GetComponentsInChildren<TextMeshProUGUI>();
-            texts[0].text = chatMessage.GetUsername(); // or skip if you don’t want names
-            texts[1].text = chatMessage.GetMessage();
+            var messageManager = newMessage.GetComponent<ChatMessageUIManager>();
+            messageManager.SetupChatMessage(chatMessage, linkedMessage, UpdateReplyToId);
         }
 
         private void UpdateScroll()
         {
             Debug.Log("Updating Chat history scroll");
             chatHistoryScrollRect.verticalNormalizedPosition = 0f;
+        }
+
+        // Includes default parameters for reset
+        private void UpdateReplyToId(int replyToId = 0, string username = "", string message = "")
+        {
+            Debug.Log($"Update Reply to Message toggled for id { replyToId }");
+            _messageReplyToId = replyToId;
+            
+            // Show/hide replying to preview above input field
+            if (_messageReplyToId == 0)
+            {
+                replyingToObject.SetActive(false);
+                return;
+            }
+            
+            // Update preview variables
+            replyingToUserName.text = username;
+            replyingToMessageText.text = message;
+            
+            // Enable again
+            replyingToObject.SetActive(true);
         }
         
         private void ValidateDependencies()

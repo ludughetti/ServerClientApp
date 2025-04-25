@@ -42,9 +42,11 @@ namespace Client
             _client.Close();
         }
         
-        public override void SendDataToServer(string message)
+        public override void SendDataToServer(int linkedMessageId, string message)
         {
-            ChatMessage newMessage = new ChatMessage(_username, message);
+            // We initialize _id = 0 here because the server will assign the message id
+            // This is to ensure consistency among all clients
+            var newMessage = new ChatMessage(0, linkedMessageId, _username, message);
             Debug.Log($"Sending data to UDP server: { newMessage }");
             
             var data = newMessage.EncodeMessage();
@@ -55,20 +57,25 @@ namespace Client
         {
             Debug.Log("Message received in UDP client. Processing...");
             var endpoint = new IPEndPoint(IPAddress.Any, 0);
-            var bytesRead = _client.EndReceive(asyncResult, ref endpoint);
+            var data = _client.EndReceive(asyncResult, ref endpoint);
 
-            var newMessage = ChatMessage.DecodeMessage(bytesRead);
+            if (data.Length == 0)
+            {
+                Debug.Log($"Message received but no bytes read");
+                return;
+            }
             
-            Debug.Log($"Enqueueing message in UDP client: { newMessage }");
-            _dataReceived.Enqueue(newMessage);
+            StoreNewMessage(data);
             
             _client.BeginReceive(OnRead, _client);
-            Debug.Log("Message processed and UDP client listening again");
+            Debug.Log("UDP client listening again");
         }
 
+        // In the case of UDP clients we send a default message on connect 
+        // so that the server can have the reference for broadcasting other clients' messages
         private void SendOnConnect()
         {
-            SendDataToServer(_onConnectMessage);
+            SendDataToServer(0, _onConnectMessage);
         }
     }
 }

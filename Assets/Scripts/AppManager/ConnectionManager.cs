@@ -79,9 +79,9 @@ namespace AppManager
             return _serverManager;
         }
 
-        public void HandleClientMessageSent(string message)
+        public void HandleClientMessageSent(int linkedMessageId, string message)
         {
-            _clientManager.SendDataToServer(message);
+            _clientManager.SendDataToServer(linkedMessageId, message);
         }
 
         private void HandleServerStart(int port, string networkType, bool isServerOnlyApp)

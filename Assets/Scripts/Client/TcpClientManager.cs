@@ -38,9 +38,11 @@ namespace Client
             _client?.Close();
         }
         
-        public override void SendDataToServer(string message)
+        public override void SendDataToServer(int linkedMessageId, string message)
         {
-            ChatMessage newMessage = new ChatMessage(_username, message);
+            // We initialize _id = 0 here because the server will assign the message id
+            // This is to ensure consistency among all clients
+            var newMessage = new ChatMessage(0, linkedMessageId, _username, message);
             Debug.Log($"Sending data to server: '{ _username } - { message }'");
             
             var data = newMessage.EncodeMessage();
@@ -72,15 +74,12 @@ namespace Client
                 var data = new byte[bytesRead];
                 Array.Copy(ReadBuffer, data, bytesRead);
                 
-                ChatMessage newMessage = ChatMessage.DecodeMessage(data);
-                
-                Debug.Log($"Message enqueued in client: '{ newMessage.GetUsername() } - { newMessage.GetMessage() }'");
-                _dataReceived.Enqueue(newMessage);
+                StoreNewMessage(data);
             }
             
             Array.Clear(ReadBuffer, 0, ReadBuffer.Length);
             NetworkStream?.BeginRead(ReadBuffer, 0, ReadBuffer.Length, OnRead, null);
-            Debug.Log("Buffer cleared and client listening again");
+            Debug.Log("Buffer cleared and TCP client listening again");
         }
     }
 }

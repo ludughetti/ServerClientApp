@@ -39,13 +39,14 @@ namespace Server
 
         public override void ReceiveAndBroadcastData(byte[] data)
         {
-            ChatMessage newMessage = QueueNewMessage(data);
-            Debug.Log($"Broadcasting data to clients: {newMessage.GetUsername()} + { newMessage.GetMessage() }");
+            var newMessage = StoreNewMessage(data);
+            Debug.Log($"Broadcasting data to clients: '{ newMessage }'");
             
             foreach (var udpClient in _connectedClients)
             {
                 Debug.Log($"Sending message to client ");
-                _udpServer.Send(data, data.Length, udpClient.GetClientEndPoint());
+                var updatedMessageData = newMessage.EncodeMessage();
+                _udpServer.Send(updatedMessageData, updatedMessageData.Length, udpClient.GetClientEndPoint());
             }
         }
 

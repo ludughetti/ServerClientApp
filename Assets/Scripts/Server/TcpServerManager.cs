@@ -44,15 +44,16 @@ namespace Server
 
         public override void ReceiveAndBroadcastData(byte[] data)
         {
-            var newMessage = QueueNewMessage(data);
-            Debug.Log($"Broadcasting data to clients: {newMessage.GetUsername()} + { newMessage.GetMessage() }");
+            var newMessage = StoreNewMessage(data);
+            Debug.Log($"Broadcasting data to clients: { newMessage }");
             
             foreach (var tcpClient in _connectedClients)
             {
                 try
                 {
                     Debug.Log($"Sending message to client ");
-                    tcpClient.NetworkStream.Write(data, 0, data.Length);
+                    var updatedMessageData = newMessage.EncodeMessage();
+                    tcpClient.NetworkStream.Write(updatedMessageData, 0, updatedMessageData.Length);
                 }
                 catch (Exception e)
                 {
