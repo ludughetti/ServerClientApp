@@ -1,9 +1,9 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using Messages;
 using Server;
 using UnityEngine;
-using static Utils.Encoder;
 
 namespace Client
 {
@@ -18,6 +18,12 @@ namespace Client
         public TcpClientManager(TcpClient client)
         {
             _client = client;
+        }
+        
+        public TcpClientManager(TcpClient client, string userName)
+        {
+            _client = client;
+            _username = userName;
         }
 
         public override void StartClient(IPAddress serverIPAddress, int port)
@@ -34,8 +40,10 @@ namespace Client
         
         public override void SendDataToServer(string message)
         {
-            Debug.Log($"Sending data to server: {message}");
-            var data = Encode(message);
+            ChatMessage newMessage = new ChatMessage(_username, message);
+            Debug.Log($"Sending data to server: '{ _username } - { message }'");
+            
+            var data = newMessage.EncodeMessage();
             NetworkStream.Write(data, 0, data.Length);
         }
 
@@ -61,10 +69,13 @@ namespace Client
             lock (ReadHandler)
             {
                 Debug.Log("Processing message received in client");
-                var dataToBroadcast = new byte[bytesRead];
-                Array.Copy(ReadBuffer, dataToBroadcast, bytesRead);
-                Debug.Log($"Message enqueued in client: { Decode(dataToBroadcast) }");
-                _dataReceived.Enqueue(dataToBroadcast);
+                var data = new byte[bytesRead];
+                Array.Copy(ReadBuffer, data, bytesRead);
+                
+                ChatMessage newMessage = ChatMessage.DecodeMessage(data);
+                
+                Debug.Log($"Message enqueued in client: '{ newMessage.GetUsername() } - { newMessage.GetMessage() }'");
+                _dataReceived.Enqueue(newMessage);
             }
             
             Array.Clear(ReadBuffer, 0, ReadBuffer.Length);

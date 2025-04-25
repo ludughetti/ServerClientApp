@@ -61,7 +61,7 @@ namespace AppManager
 
             // ConnectionManager will decide how to set up and start up the server/client
             connectionManager.StartConnection(_isServerOnlyApp, _isClientOnlyApp, uiServerClientHandler.GetServerIP(), 
-                Convert.ToInt32(port), uiServerClientHandler.GetNetworkType());
+                Convert.ToInt32(port), uiServerClientHandler.GetNetworkType(), uiServerClientHandler.GetUsername());
             
             // If it's server only we subscribe the event so that UI gets updated too and early exit
             if (_isServerOnlyApp)

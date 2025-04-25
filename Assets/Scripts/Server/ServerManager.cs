@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Messages;
 using UnityEngine;
 using static Utils.Encoder;
 
@@ -7,11 +8,11 @@ namespace Server
 {
     public abstract class ServerManager : MonoBehaviour
     {
-        protected Queue<string> _uiPendingMessages = new ();
-        protected Queue<string> _chatHistory = new ();
+        protected Queue<ChatMessage> _uiPendingMessages = new ();
+        protected Queue<ChatMessage> _chatHistory = new ();
         protected bool _queueUIPendingMessages;
         
-        public Action<byte[]> OnDataReceived;
+        public Action<ChatMessage> OnDataReceived;
         
         public abstract void StartServer(int portNumber, bool queueUIPendingMessages);
         public abstract void StopServer();
@@ -25,8 +26,22 @@ namespace Server
                 Debug.Log("Processing server UI pending messages");
                 var message = _uiPendingMessages.Dequeue();
                 
-                OnDataReceived?.Invoke(Encode(message));
+                OnDataReceived?.Invoke(message);
             }
+        }
+        
+        protected ChatMessage QueueNewMessage(byte[] data)
+        {
+            var chatMessage = ChatMessage.DecodeMessage(data);
+            
+            // Queue messages in history
+            _chatHistory.Enqueue(chatMessage);
+            
+            // Queue in pending messages if it's running as server only so that UI is updated
+            if (_queueUIPendingMessages)
+                _uiPendingMessages.Enqueue(chatMessage);
+            
+            return chatMessage;
         }
     }
 }

@@ -21,9 +21,10 @@ namespace AppManager
                 FlushData();
         }
         
-        public void StartConnection(bool isServerOnlyApp, bool isClientOnlyApp, string ipAddress, int port, string networkType)
+        public void StartConnection(bool isServerOnlyApp, bool isClientOnlyApp, string ipAddress, int port, 
+            string networkType, string userName)
         {
-            Debug.Log($"Connecting...\n" +
+            Debug.Log("Connecting...\n" +
                       $"Is Client only? { isClientOnlyApp }, " +
                       $"Is Server only? { isServerOnlyApp }, " +
                       $"IPAddress: { ipAddress }, " +
@@ -46,7 +47,7 @@ namespace AppManager
             _serverIp = isClientOnlyApp ? IPAddress.Parse(ipAddress) : IPAddress.Loopback;
 
             // Initialize client
-            HandleClientStart(_serverIp, port, networkType);
+            HandleClientStart(_serverIp, port, networkType, userName);
         }
 
         public void EndConnection()
@@ -99,11 +100,11 @@ namespace AppManager
             _isConnectionManagerActive = true;
         }
 
-        private void HandleClientStart(IPAddress ipAddress, int port, string networkType)
+        private void HandleClientStart(IPAddress ipAddress, int port, string networkType, string userName)
         {
             _clientManager = "TCP".Equals(networkType) ? 
-                new TcpClientManager(new TcpClient()) :
-                new UdpClientManager();
+                new TcpClientManager(new TcpClient(), userName) :
+                new UdpClientManager(userName);
             
             _clientManager.StartClient(ipAddress, port);
             

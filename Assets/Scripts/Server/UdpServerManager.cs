@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using Client;
+using Messages;
 using UnityEngine;
 using Utils;
-using static Utils.Encoder;
 
 namespace Server
 {
@@ -39,18 +39,12 @@ namespace Server
 
         public override void ReceiveAndBroadcastData(byte[] data)
         {
-            var dataMessage = Decode(data);
-            
-            // Queue messages in history
-            _chatHistory.Enqueue(dataMessage);
-            
-            // Queue messages for UI
-            if (_queueUIPendingMessages)
-                _uiPendingMessages.Enqueue(dataMessage);
+            ChatMessage newMessage = QueueNewMessage(data);
+            Debug.Log($"Broadcasting data to clients: {newMessage.GetUsername()} + { newMessage.GetMessage() }");
             
             foreach (var udpClient in _connectedClients)
             {
-                Debug.Log($"Broadcasting data to client: { dataMessage }");
+                Debug.Log($"Sending message to client ");
                 _udpServer.Send(data, data.Length, udpClient.GetClientEndPoint());
             }
         }
@@ -60,25 +54,13 @@ namespace Server
             Debug.Log("Processing new message received in UDP server");
             var dataToBroadcast = _udpServer.EndReceive(result, ref _udpServerEndpoint);
 
-            // If the server doesn't have this client in the list then 
+            // If the server doesn't have this client in the list then add it
             if (!_connectedClients.Exists(client => client.GetClientEndPoint().Equals(_udpServerEndpoint)))
             {
                 Debug.Log("Adding new client to server list");
                 _connectedClients.Add(new UdpClientManager(_udpServerEndpoint));
             }
-            
-            Debug.Log($"Total connected clients: {_connectedClients.Count}");
-            
-            var dataToQueue = Decode(dataToBroadcast);
-            
-            // Queue messages in history
-            _chatHistory.Enqueue(dataToQueue);
-            
-            // Queue in pending messages if it's running as server only so that UI is updated
-            if (_queueUIPendingMessages)
-                _uiPendingMessages.Enqueue(dataToQueue);
-            
-            Debug.Log($"Broadcasting data to clients. Message: { dataToQueue }");
+
             ReceiveAndBroadcastData(dataToBroadcast);
             
             _udpServer.BeginReceive(OnRead, null);

@@ -1,5 +1,5 @@
 using System;
-using System.Text;
+using Messages;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,10 +37,10 @@ namespace UI
             userInput.text = string.Empty;
         }
         
-        public void OnDataReceived(byte[] data)
+        public void OnDataReceived(ChatMessage chatMessage)
         {
             Debug.Log("OnMessageReceived invoked");
-            UpdateChatHistory(Decode(data));
+            UpdateChatHistory(chatMessage.ToString());
             UpdateScroll();
         }
         

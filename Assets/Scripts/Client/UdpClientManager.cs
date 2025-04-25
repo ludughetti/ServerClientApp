@@ -1,8 +1,8 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using Messages;
 using UnityEngine;
-using static Utils.Encoder;
 
 namespace Client
 {
@@ -10,9 +10,14 @@ namespace Client
     {
         private IPEndPoint _serverEndpoint;
         private UdpClient _client;
+
+        public UdpClientManager(string username)
+        {
+            _username = username;
+        }
         
-        public UdpClientManager() { }
-        
+        // Since this constructor is used by the server and the username is saved in each message,
+        // we avoid initializing it here
         public UdpClientManager(IPEndPoint clientServerEndpoint)
         {
             _serverEndpoint = clientServerEndpoint;
@@ -39,8 +44,10 @@ namespace Client
         
         public override void SendDataToServer(string message)
         {
-            Debug.Log($"Sending data to UDP server: {message}");
-            var data = Encode(message);
+            ChatMessage newMessage = new ChatMessage(_username, message);
+            Debug.Log($"Sending data to UDP server: { newMessage }");
+            
+            var data = newMessage.EncodeMessage();
             _client.Send(data, data.Length, _serverEndpoint);
         }
         
@@ -50,11 +57,13 @@ namespace Client
             var endpoint = new IPEndPoint(IPAddress.Any, 0);
             var bytesRead = _client.EndReceive(asyncResult, ref endpoint);
 
-            Debug.Log($"Enqueueing message in UDP client: { Decode(bytesRead) }");
-            _dataReceived.Enqueue(bytesRead);
+            var newMessage = ChatMessage.DecodeMessage(bytesRead);
             
-            Debug.Log("Message processed and UDP client listening again");
+            Debug.Log($"Enqueueing message in UDP client: { newMessage }");
+            _dataReceived.Enqueue(newMessage);
+            
             _client.BeginReceive(OnRead, _client);
+            Debug.Log("Message processed and UDP client listening again");
         }
 
         private void SendOnConnect()

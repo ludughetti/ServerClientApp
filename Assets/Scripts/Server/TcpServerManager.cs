@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using Client;
+using Messages;
 using UnityEngine;
 using Utils;
 using static Utils.Encoder;
@@ -43,20 +44,14 @@ namespace Server
 
         public override void ReceiveAndBroadcastData(byte[] data)
         {
-            var dataMessage = Decode(data);
-            
-            // Queue messages in history
-            _chatHistory.Enqueue(dataMessage);
-            
-            // Queue in pending messages if it's running as server only so that UI is updated
-            if (_queueUIPendingMessages)
-                _uiPendingMessages.Enqueue(dataMessage);
+            var newMessage = QueueNewMessage(data);
+            Debug.Log($"Broadcasting data to clients: {newMessage.GetUsername()} + { newMessage.GetMessage() }");
             
             foreach (var tcpClient in _connectedClients)
             {
                 try
                 {
-                    Debug.Log($"Broadcasting data to client: { dataMessage }");
+                    Debug.Log($"Sending message to client ");
                     tcpClient.NetworkStream.Write(data, 0, data.Length);
                 }
                 catch (Exception e)
@@ -129,7 +124,6 @@ namespace Server
                 Array.Copy(clientManager.ReadBuffer, dataToBroadcast, bytesRead);
             }
             
-            Debug.Log($"Broadcasting data to clients. Message: {Decode(dataToBroadcast)}");
             ReceiveAndBroadcastData(dataToBroadcast);
             
             Array.Clear(clientManager.ReadBuffer, 0, clientManager.ReadBuffer.Length);
