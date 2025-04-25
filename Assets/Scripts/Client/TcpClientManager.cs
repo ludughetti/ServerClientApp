@@ -23,7 +23,7 @@ namespace Client
         public TcpClientManager(TcpClient client, string userName)
         {
             _client = client;
-            _username = userName;
+            Username = userName;
         }
 
         public override void StartClient(IPAddress serverIPAddress, int port)
@@ -42,8 +42,8 @@ namespace Client
         {
             // We initialize _id = 0 here because the server will assign the message id
             // This is to ensure consistency among all clients
-            var newMessage = new ChatMessage(0, linkedMessageId, _username, message);
-            Debug.Log($"Sending data to server: '{ _username } - { message }'");
+            var newMessage = new ChatMessage(0, linkedMessageId, Username, message);
+            Debug.Log($"Sending data to server: '{ Username } - { message }'");
             
             var data = newMessage.EncodeMessage();
             NetworkStream.Write(data, 0, data.Length);

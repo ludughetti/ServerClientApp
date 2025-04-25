@@ -8,8 +8,8 @@ namespace Client
 {
     public abstract class ClientManager
     {
-        protected string _onConnectMessage = "User connected to chat";
-        protected string _username;
+        protected string OnConnectMessage = "User connected to chat";
+        protected string Username;
         
         private Queue<ChatMessage> _uiPendingMessages = new();
         private List<ChatMessage> _chatHistory = new ();

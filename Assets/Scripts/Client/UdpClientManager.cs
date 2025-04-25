@@ -13,7 +13,7 @@ namespace Client
 
         public UdpClientManager(string username)
         {
-            _username = username;
+            Username = username;
         }
         
         // Since this constructor is used by the server and the username is saved in each message,
@@ -46,7 +46,7 @@ namespace Client
         {
             // We initialize _id = 0 here because the server will assign the message id
             // This is to ensure consistency among all clients
-            var newMessage = new ChatMessage(0, linkedMessageId, _username, message);
+            var newMessage = new ChatMessage(0, linkedMessageId, Username, message);
             Debug.Log($"Sending data to UDP server: { newMessage }");
             
             var data = newMessage.EncodeMessage();
@@ -75,7 +75,7 @@ namespace Client
         // so that the server can have the reference for broadcasting other clients' messages
         private void SendOnConnect()
         {
-            SendDataToServer(0, _onConnectMessage);
+            SendDataToServer(0, OnConnectMessage);
         }
     }
 }

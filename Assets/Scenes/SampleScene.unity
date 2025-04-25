@@ -396,6 +396,8 @@ MonoBehaviour:
   chatContent: {fileID: 1166011830}
   chatMessagePrefab: {fileID: 4107545165387831412, guid: ab14e0de0ee783b4caa5b1b26ad7f271, type: 3}
   replyingToObject: {fileID: 1878922434}
+  replyingToUserName: {fileID: 1649953086}
+  replyingToMessageText: {fileID: 2110721}
   defaultInputMessage: Send a message...
 --- !u!1 &71592265
 GameObject:
@@ -5256,7 +5258,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 393322673}
         m_TargetAssemblyTypeName: UI.UIServerClientHandler, Assembly-CSharp
         m_MethodName: OnClientToggleValueChanged
         m_Mode: 0
@@ -6329,7 +6331,7 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 393322673}
         m_TargetAssemblyTypeName: UI.UIServerClientHandler, Assembly-CSharp
         m_MethodName: OnServerOnlyValueChanged
         m_Mode: 0

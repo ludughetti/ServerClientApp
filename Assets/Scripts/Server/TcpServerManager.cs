@@ -25,7 +25,7 @@ namespace Server
             _listener.BeginAcceptTcpClient(OnClientConnected, null);
             
             // Define whether to queue incoming messages to display in the UI (only applicable in server-only mode)
-            _queueUIPendingMessages = queueUIPendingMessages;
+            QueueUIPendingMessages = queueUIPendingMessages;
         }
 
         public override void StopServer()

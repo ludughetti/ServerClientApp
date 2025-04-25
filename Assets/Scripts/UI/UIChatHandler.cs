@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Messages;
 using TMPro;
 using UnityEngine;
@@ -46,7 +47,7 @@ namespace UI
         {
             Debug.Log("UI processing new message");
             UpdateChatHistory(chatMessage, linkedMessage);
-            UpdateScroll();
+            StartCoroutine(UpdateScroll());
         }
 
         public void ResetChatHistory()
@@ -70,9 +71,12 @@ namespace UI
             messageManager.SetupChatMessage(chatMessage, linkedMessage, UpdateReplyToId);
         }
 
-        private void UpdateScroll()
+        private IEnumerator UpdateScroll()
         {
+            // Wait for next frame so that everything is loaded before updating the scroll
+            yield return null;
             Debug.Log("Updating Chat history scroll");
+            Canvas.ForceUpdateCanvases();
             chatHistoryScrollRect.verticalNormalizedPosition = 0f;
         }
 

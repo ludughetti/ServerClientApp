@@ -7,7 +7,7 @@ namespace Server
 {
     public abstract class ServerManager : MonoBehaviour
     {
-        protected bool _queueUIPendingMessages;
+        protected bool QueueUIPendingMessages;
         
         private Queue<ChatMessage> _uiPendingMessages = new ();
         private List<ChatMessage> _chatHistory = new ();
@@ -46,7 +46,7 @@ namespace Server
             _chatHistory.Add(chatMessage);
             
             // Queue in pending messages if it's running as server only so that UI is updated
-            if (_queueUIPendingMessages)
+            if (QueueUIPendingMessages)
                 _uiPendingMessages.Enqueue(chatMessage);
             
             return chatMessage;
