@@ -20,6 +20,15 @@ namespace AppManager
             if (_isConnectionManagerActive)
                 FlushData();
         }
+
+        // Wrapper for headless mode
+        public void StartConnection(int port, string networkType)
+        {
+            if ("TCP".Equals(networkType) || "UDP".Equals(networkType))
+                StartConnection(true, false, string.Empty, port, networkType, "");
+            else
+                Debug.LogError($"Unknown network type: {networkType}. Server will not start.");
+        }
         
         public void StartConnection(bool isServerOnlyApp, bool isClientOnlyApp, string ipAddress, int port, 
             string networkType, string userName)

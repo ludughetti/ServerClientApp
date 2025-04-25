@@ -26,7 +26,6 @@ namespace AppManager
         private void OnEnable()
         {
             navigationManager.OnMenuChange += CheckMenuChange;
-            uiChatHandler.OnUserMessageSent += connectionManager.HandleClientMessageSent;
         }
 
         private void OnDisable()
@@ -41,6 +40,11 @@ namespace AppManager
             UnityEditor.EditorApplication.isPlaying = false;
 #endif
             Application.Quit();
+        }
+
+        public bool IsServerOnlyApp()
+        {
+            return _isClientOnlyApp;
         }
 
         private void CheckMenuChange(string newMenuId)
@@ -70,7 +74,8 @@ namespace AppManager
                 return;
             }
             
-            // If it's a client subscribe to client receive event so that UI is updated
+            // If it's a client subscribe to events so that UI is updated
+            uiChatHandler.OnUserMessageSent += connectionManager.HandleClientMessageSent;
             connectionManager.GetClientManager().OnDataReceived += uiChatHandler.OnDataReceived;
         }
 
@@ -81,7 +86,10 @@ namespace AppManager
             
             // Unsubscribe upon client disconnect 
             if (!_isServerOnlyApp)
+            {
+                uiChatHandler.OnUserMessageSent -= connectionManager.HandleClientMessageSent;
                 connectionManager.GetClientManager().OnDataReceived -= uiChatHandler.OnDataReceived;
+            }
             
             TcpServerManager.Instance.StopServer();
 

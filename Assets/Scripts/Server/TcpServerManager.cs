@@ -6,7 +6,6 @@ using Client;
 using Messages;
 using UnityEngine;
 using Utils;
-using static Utils.Encoder;
 
 namespace Server
 {

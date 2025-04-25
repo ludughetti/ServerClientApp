@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
+using AppManager;
 using Messages;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using static Utils.Validator;
 
@@ -10,12 +12,14 @@ namespace UI
 {
     public class UIChatHandler : MonoBehaviour
     {
+        [SerializeField] private ApplicationManager applicationManager;
         [SerializeField] private ScrollRect chatHistoryScrollRect;
         [SerializeField] private TMP_InputField userInput;
         [SerializeField] private TMP_Text usersList;
         [SerializeField] private Transform chatContent;
+        [SerializeField] private GameObject inputPanel;
         [SerializeField] private GameObject chatMessagePrefab;
-        [SerializeField] private GameObject replyingToObject;
+        [SerializeField] private GameObject replyingToPanel;
         [SerializeField] private TMP_Text replyingToUserName;
         [SerializeField] private TMP_Text replyingToMessageText;
         [SerializeField] private string defaultInputMessage = "Send a message...";
@@ -29,6 +33,8 @@ namespace UI
             ValidateDependencies();
             
             userInput.text = defaultInputMessage;
+            // If it's server only, hide input section
+            inputPanel.SetActive(!applicationManager.IsServerOnlyApp());
         }
 
         public void OnSendButtonClick()
@@ -89,7 +95,7 @@ namespace UI
             // Show/hide replying to preview above input field
             if (_messageReplyToId == 0)
             {
-                replyingToObject.SetActive(false);
+                replyingToPanel.SetActive(false);
                 return;
             }
             
@@ -98,7 +104,7 @@ namespace UI
             replyingToMessageText.text = message;
             
             // Enable again
-            replyingToObject.SetActive(true);
+            replyingToPanel.SetActive(true);
         }
         
         private void ValidateDependencies()

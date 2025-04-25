@@ -54,7 +54,7 @@ namespace UI
             return usernameText.text;
         }
 
-        public void OnClientToggleValueChanged(bool isClient)
+        public void OnClientOnlyValueChanged(bool isClient)
         {
             _isClientApp = isClient;
             serverIPInputField.interactable = isClient;

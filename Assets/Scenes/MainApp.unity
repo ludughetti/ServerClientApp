@@ -390,12 +390,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc3b10f3b78764a4bb42986e7d0bc254, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  applicationManager: {fileID: 2007892561}
   chatHistoryScrollRect: {fileID: 71592267}
   userInput: {fileID: 1252168337}
   usersList: {fileID: 896787178}
   chatContent: {fileID: 1166011830}
+  inputPanel: {fileID: 1025639094}
   chatMessagePrefab: {fileID: 4107545165387831412, guid: ab14e0de0ee783b4caa5b1b26ad7f271, type: 3}
-  replyingToObject: {fileID: 1878922434}
+  replyingToPanel: {fileID: 1878922434}
   replyingToUserName: {fileID: 1649953086}
   replyingToMessageText: {fileID: 2110721}
   defaultInputMessage: Send a message...
@@ -5260,7 +5262,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 393322673}
         m_TargetAssemblyTypeName: UI.UIServerClientHandler, Assembly-CSharp
-        m_MethodName: OnClientToggleValueChanged
+        m_MethodName: OnClientOnlyValueChanged
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
