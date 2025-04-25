@@ -1869,8 +1869,8 @@ MonoBehaviour:
   isClientToggle: {fileID: 1287289839}
   isServerOnlyToggle: {fileID: 1531165665}
   serverIPInputField: {fileID: 771313536}
-  portText: {fileID: 1486405528}
-  usernameText: {fileID: 1212736950}
+  portField: {fileID: 1486405528}
+  usernameField: {fileID: 1212736950}
   networkDropdown: {fileID: 720934905}
 --- !u!1 &428826510
 GameObject:

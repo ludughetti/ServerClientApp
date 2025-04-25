@@ -10,8 +10,8 @@ namespace UI
         [SerializeField] private Toggle isClientToggle;
         [SerializeField] private Toggle isServerOnlyToggle;
         [SerializeField] private TMP_InputField serverIPInputField;
-        [SerializeField] private TMP_InputField portText;
-        [SerializeField] private TMP_InputField usernameText;
+        [SerializeField] private TMP_InputField portField;
+        [SerializeField] private TMP_InputField usernameField;
         [SerializeField] private TMP_Dropdown networkDropdown;
 
         private bool _isClientApp;
@@ -41,7 +41,7 @@ namespace UI
 
         public string GetPort()
         {
-            return portText.text;
+            return portField.text;
         }
 
         public string GetNetworkType()
@@ -51,7 +51,7 @@ namespace UI
 
         public string GetUsername()
         {
-            return usernameText.text;
+            return usernameField.text;
         }
 
         public void OnClientOnlyValueChanged(bool isClient)
@@ -66,6 +66,7 @@ namespace UI
         public void OnServerOnlyValueChanged(bool isServerOnlyApp)
         {
             _isServerOnlyApp = isServerOnlyApp;
+            usernameField.interactable = !isServerOnlyApp;
             isClientToggle.interactable = !isServerOnlyApp;
             
             Debug.Log($"Button clicked. Final values: isServerClientApp = {_isServerOnlyApp}, is ServerIP interactable = {serverIPInputField.interactable}");
@@ -75,7 +76,7 @@ namespace UI
         {
             enabled = IsDependencyConfigured(name, "Is Client Toggle", isClientToggle) && 
                       IsDependencyConfigured(name, "Server IP Field", serverIPInputField) &&
-                      IsDependencyConfigured(name, "Port Text", portText);
+                      IsDependencyConfigured(name, "Port Text", portField);
         }
     }
 }

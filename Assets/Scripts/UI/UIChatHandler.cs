@@ -4,7 +4,6 @@ using AppManager;
 using Messages;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using static Utils.Validator;
 
@@ -33,8 +32,6 @@ namespace UI
             ValidateDependencies();
             
             userInput.text = defaultInputMessage;
-            // If it's server only, hide input section
-            inputPanel.SetActive(!applicationManager.IsServerOnlyApp());
         }
 
         public void OnSendButtonClick()
@@ -64,6 +61,12 @@ namespace UI
         public void OnCancelReplyToButtonClick()
         {
             UpdateReplyToId();
+        }
+
+        public void HideInputPanel(bool isServerOnlyApp)
+        {
+            // If it's server only, hide input section
+            inputPanel.SetActive(!isServerOnlyApp);
         }
         
         private void UpdateChatHistory(ChatMessage chatMessage, ChatMessage linkedMessage)
