@@ -3,24 +3,17 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using Client;
-using Unity.VisualScripting;
-using Utils;
 using UnityEngine;
 using static Utils.Encoder;
 
 namespace Server
 {
-    public class TcpServerManager : MonoBehaviourSingleton<TcpServerManager>
+    public class TcpServerManager : ServerManager
     {
         private List<TcpClientManager> _connectedClients = new ();
         private TcpListener _listener;
-        private Queue<string> _uiPendingMessages = new ();
-        private Queue<string> _chatHistory = new ();
-        private bool _queueUIPendingMessages;
         
-        public Action<byte[]> OnServerMessageReceived;
-        
-        public void StartServer(int portNumber, bool queueUIPendingMessages)
+        public override void StartServer(int portNumber, bool queueUIPendingMessages)
         {
             Debug.Log($"Starting Server on port { portNumber }");
             _listener = new TcpListener(IPAddress.Any, portNumber);
@@ -32,7 +25,7 @@ namespace Server
             _queueUIPendingMessages = queueUIPendingMessages;
         }
 
-        public void StopServer()
+        public override void StopServer()
         {
             Debug.Log("Stopping Server");
             _listener?.Stop();
@@ -46,14 +39,14 @@ namespace Server
             }
         }
 
-        private void ReceiveAndBroadcastData(byte[] data)
+        public override void ReceiveAndBroadcastData(byte[] data)
         {
             var dataMessage = Decode(data);
             
             // Queue messages in history
             _chatHistory.Enqueue(dataMessage);
             
-            // 
+            // Queue in pending messages if it's running as server only so that UI is updated
             if (_queueUIPendingMessages)
                 _uiPendingMessages.Enqueue(dataMessage);
             
@@ -111,7 +104,7 @@ namespace Server
             }
         }
 
-        private void OnRead(IAsyncResult result)
+        public override void OnRead(IAsyncResult result)
         {
             Debug.Log("Server received new message");
             var clientManager = (TcpClientManager) result.AsyncState;
@@ -140,17 +133,6 @@ namespace Server
             Array.Clear(clientManager.ReadBuffer, 0, clientManager.ReadBuffer.Length);
             clientManager.NetworkStream.BeginRead(clientManager.ReadBuffer, 0, 
                 clientManager.ReadBuffer.Length, OnRead, clientManager);
-        }
-
-        public void FlushEnqueuedMessages()
-        {
-            while (_uiPendingMessages.Count > 0)
-            {
-                Debug.Log("Processing server UI pending messages");
-                var message = _uiPendingMessages.Dequeue();
-                
-                OnServerMessageReceived?.Invoke(Encode(message));
-            }
         }
     }
 }

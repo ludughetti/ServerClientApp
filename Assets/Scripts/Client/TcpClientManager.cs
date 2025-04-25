@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using Server;
@@ -8,35 +7,32 @@ using static Utils.Encoder;
 
 namespace Client
 {
-    public class TcpClientManager
+    public class TcpClientManager : ClientManager
     {
         private TcpClient _client;
-        private Queue<byte[]> _dataReceived = new ();
         
         public byte[] ReadBuffer = new byte[5000];
         public object ReadHandler = new ();
         public NetworkStream NetworkStream => _client?.GetStream();
-
-        public Action<byte[]> OnClientMessageReceived;
         
         public TcpClientManager(TcpClient client)
         {
             _client = client;
         }
 
-        public void StartClient(IPAddress serverIPAddress, int port)
+        public override void StartClient(IPAddress serverIPAddress, int port)
         {
             Debug.Log($"Starting client... connecting to {serverIPAddress}:{port}");
             _client.BeginConnect(serverIPAddress, port, OnConnectToServer, null);
         }
         
-        public void CloseClient()
+        public override void CloseClient()
         {
             NetworkStream?.Close();
             _client?.Close();
         }
         
-        public void SendDataToServer(string message)
+        public override void SendDataToServer(string message)
         {
             Debug.Log($"Sending data to server: {message}");
             var data = Encode(message);
@@ -50,7 +46,7 @@ namespace Client
             NetworkStream.BeginRead(ReadBuffer, 0, ReadBuffer.Length, OnRead, null);
         }
         
-        private void OnRead(IAsyncResult asyncResult)
+        public override void OnRead(IAsyncResult asyncResult)
         {
             Debug.Log("Message received in client");
             var bytesRead = NetworkStream.EndRead(asyncResult);
@@ -74,23 +70,6 @@ namespace Client
             Array.Clear(ReadBuffer, 0, ReadBuffer.Length);
             NetworkStream?.BeginRead(ReadBuffer, 0, ReadBuffer.Length, OnRead, null);
             Debug.Log("Buffer cleared and client listening again");
-        }
-
-        public void FlushQueuedMessages()
-        {
-            while (_dataReceived.Count > 0)
-            {
-                Debug.Log("Processing client UI pending messages");
-                var data = _dataReceived.Dequeue();
-                try
-                {
-                    OnClientMessageReceived.Invoke(data);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogException(e);
-                }
-            }
         }
     }
 }

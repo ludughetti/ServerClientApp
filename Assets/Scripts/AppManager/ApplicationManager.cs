@@ -1,7 +1,4 @@
 using System;
-using System.Net;
-using System.Net.Sockets;
-using Client;
 using Navigation;
 using Server;
 using UI;
@@ -20,9 +17,6 @@ namespace AppManager
 
         private bool _isClientOnlyApp;
         private bool _isServerOnlyApp;
-        private IPAddress _serverIP;
-        private int _serverPort;
-        private TcpClientManager _client;
         
         private void Awake()
         {
@@ -32,21 +26,13 @@ namespace AppManager
         private void OnEnable()
         {
             navigationManager.OnMenuChange += CheckMenuChange;
-            uiChatHandler.OnUserMessageSent += SendUserMessage;
+            uiChatHandler.OnUserMessageSent += connectionManager.HandleClientMessageSent;
         }
 
         private void OnDisable()
         {
             navigationManager.OnMenuChange -= CheckMenuChange;
-            uiChatHandler.OnUserMessageSent -= SendUserMessage;
-        }
-        
-        private void Update()
-        {
-            if(_client != null && (_isClientOnlyApp || !_isServerOnlyApp))
-                _client.FlushQueuedMessages();
-            else if (_isServerOnlyApp)
-                TcpServerManager.Instance.FlushEnqueuedMessages();
+            uiChatHandler.OnUserMessageSent -= connectionManager.HandleClientMessageSent;
         }
 
         private void CheckMenuChange(string newMenuId)
@@ -59,43 +45,23 @@ namespace AppManager
 
         private void Connect()
         {
-            Debug.Log($"Connecting...\n" +
-                      $"Is Client? {uiServerClientHandler.IsClientOnlyApp()}, " +
-                      $"IPAddress: {uiServerClientHandler.GetServerIP()}, " +
-                      $"PortNumber: {uiServerClientHandler.GetPort()}");
-
             _isClientOnlyApp = uiServerClientHandler.IsClientOnlyApp();
             _isServerOnlyApp = uiServerClientHandler.IsServerOnlyApp();
             var port = uiServerClientHandler.GetPort();
-            _serverPort = Convert.ToInt32(port);
 
-            // Is server only or is server-client
-            if (_isServerOnlyApp || !_isClientOnlyApp)
+            // ConnectionManager will decide how to start up the server/client and whether to use TCP/UDP
+            connectionManager.StartConnection(_isServerOnlyApp, _isClientOnlyApp, 
+                uiServerClientHandler.GetServerIP(), Convert.ToInt32(port), "TCP");
+            
+            // If it's server only we subscribe the event so that UI gets updated too and early exit
+            if (_isServerOnlyApp)
             {
-                TcpServerManager.Instance.StartServer(_serverPort, _isServerOnlyApp);
-                
-                // If it's server only, early exit
-                if (_isServerOnlyApp)
-                {
-                    // Since this app will only be running the server, we subscribe the event so that UI gets updated too
-                    TcpServerManager.Instance.OnServerMessageReceived += uiChatHandler.OnDataReceived;
-                    return;
-                }
+                connectionManager.GetServerManager().OnDataReceived += uiChatHandler.OnDataReceived;
+                return;
             }
             
-            // If it's a client only we use the address entered in the UI, otherwise we loopback
-            _serverIP = _isClientOnlyApp ? IPAddress.Parse(uiServerClientHandler.GetServerIP()) : IPAddress.Loopback;
-            
-            _client = new TcpClientManager(new TcpClient());
-            
-            //Subscribe to client receive event so that UI is updated
-            _client.OnClientMessageReceived += uiChatHandler.OnDataReceived;
-            _client.StartClient(_serverIP, _serverPort);
-        }
-
-        private void SendUserMessage(string message)
-        {
-            _client.SendDataToServer(message);
+            // If it's a client subscribe to client receive event so that UI is updated
+            connectionManager.GetClientManager().OnDataReceived += uiChatHandler.OnDataReceived;
         }
 
         private void Disconnect()
@@ -105,22 +71,17 @@ namespace AppManager
                       $"IPAddress: {uiServerClientHandler.GetServerIP()}, " +
                       $"PortNumber: {uiServerClientHandler.GetPort()}");
 
-            if (_isClientOnlyApp || !_isServerOnlyApp)
-            {
-                // Unsubscribe upon client disconnect 
-                _client.OnClientMessageReceived -= uiChatHandler.OnDataReceived;
-                _client.CloseClient();
-                
-                // If it's client only we don't need to close the server
-                if (_isClientOnlyApp) 
-                    return;
-            }
+            connectionManager.EndConnection();
+            
+            // Unsubscribe upon client disconnect 
+            if (!_isServerOnlyApp)
+                connectionManager.GetClientManager().OnDataReceived -= uiChatHandler.OnDataReceived;
             
             TcpServerManager.Instance.StopServer();
 
             // If we were only running the server, we unsubscribe from the UI update event 
             if (_isServerOnlyApp)
-                TcpServerManager.Instance.OnServerMessageReceived -= uiChatHandler.OnDataReceived;
+                TcpServerManager.Instance.OnDataReceived -= uiChatHandler.OnDataReceived;
         }
 
         private void ValidateDependencies()
